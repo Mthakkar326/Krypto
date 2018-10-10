@@ -28,9 +28,9 @@ krypto_target = str(krypto_deck[5])
 # Dealing
 
 print(5 * card_top + "\n" + 5 * card_top2 + 
-      f"\n| {krypto_input[0]:^2} || {krypto_input[1]:^2} || {krypto_input[2]:^2} || {krypto_input[3]:^2} || {krypto_input[4]:^2} |\n"
+      f"\n|{krypto_input[0]:^4}||{krypto_input[1]:^4}||{krypto_input[2]:^4}||{krypto_input[3]:^4}||{krypto_input[4]:^4}|\n"
           + 5 * card_bottom)
 
 print("\n" + spacing + card_top + "\n" + spacing + card_top2 + "\n" + spacing + 
-          f"| {krypto_target:^2} |" 
+          f"|{krypto_target:^4}|" 
           + "\n" + spacing + card_bottom)
