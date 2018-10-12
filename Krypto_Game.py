@@ -3,77 +3,94 @@
 import random
 import re
 
-# FORMATTING
+def deck_construction():
+    # BUILD & SHUFFLE THE DECK
+    triple_cards = [1,2,3,4,5,6]
+    quadruple_cards = [7,8,9,10]
+    double_cards = [11,12,13,14,15,16,17]
+    single_cards = [18,19,20,21,22,23,24,25]
+    krypto_deck = 3 * triple_cards + 4 * quadruple_cards + 2 * double_cards + single_cards
+    random.shuffle(krypto_deck)
+    return krypto_deck
 
-card_top = " ____ "
-card_top2 = "|    |"
-card_bottom = "|____|"
-spacing = "\t    "
+def print_format(print_input, print_output):
+    # PRINT FORMAT AS CARDS
+    card_top = " ____ "
+    card_top2 = "|    |"
+    card_bottom = "|____|"
+    spacing = "\t    "
+    print_hand = (5 * card_top + "\n" + 5 * card_top2 + 
+          f"\n|{print_input[0]:^4}||{print_input[1]:^4}||{print_input[2]:^4}||{print_input[3]:^4}||{print_input[4]:^4}|\n"
+          + 5 * card_bottom + "\n" + spacing + card_top + "\n" + spacing + card_top2 + "\n" + spacing + 
+          f"|{print_output:^4}|" + "\n" + spacing + card_bottom + "\n")
+    return print_hand
 
-# DECK BUILDING
-
-triple_cards = [1,2,3,4,5,6]
-quadruple_cards = [7,8,9,10]
-double_cards = [11,12,13,14,15,16,17]
-single_cards = [18,19,20,21,22,23,24,25]
-krypto_deck = 3 * triple_cards + 4 * quadruple_cards + 2 * double_cards + single_cards
-
-# SHUFFLING
-
-random.shuffle(krypto_deck)
-krypto_input = krypto_deck[0:5]
-krypto_target = (krypto_deck[5])
-
-# DEALING
-
-print(5 * card_top + "\n" + 5 * card_top2 + 
-      f"\n|{krypto_input[0]:^4}||{krypto_input[1]:^4}||{krypto_input[2]:^4}||{krypto_input[3]:^4}||{krypto_input[4]:^4}|\n"
-          + 5 * card_bottom)
-
-print("\n" + spacing + card_top + "\n" + spacing + card_top2 + "\n" + spacing + 
-          f"|{krypto_target:^4}|" 
-          + "\n" + spacing + card_bottom + "\n")
-
-# USER INTERACTION
-
-user_input = input("Type your solution here: ")
-user_input = ''.join(user_input.split())
-
-# CHECK TO SEE IF INPUT CAN BE EVALUATED
-
-try:
-    eval(user_input)
-except Exception:
-    print("You have entered an invalid equation.")
-else:
-    
-# CHECK TO SEE IF ONLY BINARY OPERATORS WERE USED
-    
-    user_input_sym = user_input
-    user_input_sym = list(map(str,re.split("[1234567890]", user_input_sym)))
-    incorrect_sym = ['//', '**', '%', '++', '--', '(-', '*-', '+-', '/-']
-    if set(user_input_sym).isdisjoint(set(incorrect_sym)) == False:
-        print("You can only use binary operations.")
+def game_instructions():
+    # PRINT GAME INSTRUCTIONS
+    print("Krypto is a mathematical card game with very simple rules. "\
+          "The Krypto deck contains 56 cards labelled 1 through 25. "\
+          "Five cards are randomly dealt in a straight line, known as the input cards. "\
+          "An example is included below:\n[6] [10] [7] [2] [11]\n\n"\
+          "A sixth card is then randomly dealt, known as the target card:\n[6] [10] [7] [2] [11]\n[4]\n\n"\
+          "The objective of the game is to use all 5 input cards exactly once to achieve the target card, using binary operations "\
+          "(addition, subtraction, multiplication and division):\n(6 - 10 / 2) * (11 - 7) = 4")
+       
+def check_solution(user_response, krypto_start, krypto_end):
+    # CHECK IF RESPONSE CAN BE EVALUATED
+    try:
+        eval(user_response)
+    except Exception:
+        return "You have entered an invalid equation."
     else:
-        if user_input[0] == '-':
-            print("You can only use binary operations.")
+   
+        # CHECK IF RESPONSE USES ONLY BINARY OPERATORS
+        user_input_sym = user_response
+        user_input_sym = list(map(str,re.split("[1234567890]", user_input_sym)))
+        incorrect_sym = ['//', '**', '%', '++', '--', '(-', '*-', '+-', '/-']
+        if set(user_input_sym).isdisjoint(set(incorrect_sym)) == False:
+            return "You can only use binary operations."
         else:
-            
-# CHECK TO SEE IF CORRECT NUMBERS WERE USED
-            
-            user_input_num = user_input       
-            user_input_num = list(map(str,re.split("[()+-/*]", user_input_num)))        
-            user_input_num = list(filter(None, user_input_num))
-            user_input_num = list(map(int, user_input_num))
-            user_input_num.sort()
-            krypto_input.sort()
-            if krypto_input != user_input_num:
-                print("You did not use the right input numbers.")
+            if user_response[0] == '-':
+                return "You can only use binary operations."
             else:
-            
-# CHECK TO SEE IF ANSWER IS CORRECT
                 
-                if eval(user_input) == krypto_target:
-                    print("You are correct!")
+                # CHECK IF RESPONSE USES CORRECT NUMBERS               
+                user_input_num = user_response       
+                user_input_num = list(map(str,re.split("[()+-/*]", user_input_num)))        
+                user_input_num = list(filter(None, user_input_num))
+                user_input_num = list(map(int, user_input_num))
+                user_input_num.sort()
+                krypto_start.sort()
+                if krypto_start != user_input_num:
+                    return "You did not use the right input numbers."
                 else:
-                    print("You are incorrect.")
+                
+                    # CHECK IF RESPONSE EQUALS TARGET               
+                    if eval(user_response) == krypto_end:
+                        return "You are correct!"
+                    else:
+                        return "You are incorrect."
+
+def krypto_game():
+    # PRINT KRYPTO HAND
+    krypto_input = deck_construction()[0:5]
+    krypto_target = deck_construction()[5]
+    krypto_hand = print_format(krypto_input, krypto_target)
+    print(krypto_hand)
+    
+    # USER INPUT
+    user_input = input("Enter your solution below. You can also enter the following commands:\n'help' to view game instructions\n'reset' to reshuffle the Krypto hand\n'solve' to generate a solution\n\nEnter your response here: ")
+    user_input = ''.join(user_input.split())
+    user_input = user_input.lower()
+    
+    # EVALUATE USER INPUT    
+    if user_input == 'help':
+        game_instructions()
+    elif user_input == 'reset':
+        krypto_game()
+    elif user_input == 'solve':
+        print("We are still working on developing a solver.")
+    else:
+        print(check_solution(user_input, krypto_input, krypto_target))
+
+krypto_game()
