@@ -47,29 +47,26 @@ def check_solution(user_response, krypto_start, krypto_end):
         user_input_sym = user_response
         user_input_sym = list(map(str,re.split("[1234567890]", user_input_sym)))
         incorrect_sym = ['//', '**', '%', '++', '--', '(-', '*-', '+-', '/-']
-        if set(user_input_sym).isdisjoint(set(incorrect_sym)) == False:
+        if set(user_input_sym).isdisjoint(set(incorrect_sym)) == False or user_response[0] == '-':
             return "You can only use binary operations."
         else:
-            if user_response[0] == '-':
-                return "You can only use binary operations."
+            
+            # CHECK IF RESPONSE USES CORRECT NUMBERS               
+            user_input_num = user_response       
+            user_input_num = list(map(str,re.split("[()+-/*]", user_input_num)))        
+            user_input_num = list(filter(None, user_input_num))
+            user_input_num = list(map(int, user_input_num))
+            user_input_num.sort()
+            krypto_start.sort()
+            if krypto_start != user_input_num:
+                return "You did not use the right input numbers."
             else:
                 
-                # CHECK IF RESPONSE USES CORRECT NUMBERS               
-                user_input_num = user_response       
-                user_input_num = list(map(str,re.split("[()+-/*]", user_input_num)))        
-                user_input_num = list(filter(None, user_input_num))
-                user_input_num = list(map(int, user_input_num))
-                user_input_num.sort()
-                krypto_start.sort()
-                if krypto_start != user_input_num:
-                    return "You did not use the right input numbers."
+                # CHECK IF RESPONSE EQUALS TARGET               
+                if eval(user_response) == krypto_end:
+                    return "You are correct!"
                 else:
-                
-                    # CHECK IF RESPONSE EQUALS TARGET               
-                    if eval(user_response) == krypto_end:
-                        return "You are correct!"
-                    else:
-                        return "You are incorrect."
+                    return "You are incorrect."
 
 def krypto_game():
     # PRINT KRYPTO HAND
@@ -77,7 +74,7 @@ def krypto_game():
     krypto_target = deck_construction()[5]
     krypto_hand = print_format(krypto_input, krypto_target)
     print(krypto_hand)
-    
+
     # USER INPUT
     user_input = input("Enter your solution below. You can also enter the following commands:\n'help' to view game instructions\n'reset' to reshuffle the Krypto hand\n'solve' to generate a solution\n\nEnter your response here: ")
     user_input = ''.join(user_input.split())
@@ -90,7 +87,7 @@ def krypto_game():
         krypto_game()
     elif user_input == 'solve':
         print("We are still working on developing a solver.")
-    else:
+    else:     
         print(check_solution(user_input, krypto_input, krypto_target))
 
 krypto_game()
