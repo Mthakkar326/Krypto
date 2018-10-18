@@ -45,17 +45,17 @@ def check_solution(user_response, krypto_start, krypto_end):
    
         # CHECK IF RESPONSE USES ONLY BINARY OPERATORS
         user_input_sym = user_response
-        user_input_sym = list(map(str,re.split("[1234567890]", user_input_sym)))
-        incorrect_sym = ['//', '**', '%', '++', '--', '(-', '*-', '+-', '/-']
-        if set(user_input_sym).isdisjoint(set(incorrect_sym)) == False or user_response[0] == '-':
+        user_input_sym = list(map(str,re.split("[1234567890]", user_input_sym)))     # splits into list of operators
+        incorrect_sym = ['//', '**', '%', '++', '--', '(-', '*-', '+-', '/-','_',',']     # static list of incorrect operators
+        if set(user_input_sym).isdisjoint(set(incorrect_sym)) == False or user_response[0] == '-':     # ensure there are no incorrect operators used
             return "You can only use binary operations."
         else:
             
             # CHECK IF RESPONSE USES CORRECT NUMBERS               
             user_input_num = user_response       
-            user_input_num = list(map(str,re.split("[()+-/*]", user_input_num)))        
-            user_input_num = list(filter(None, user_input_num))
-            user_input_num = list(map(int, user_input_num))
+            user_input_num = list(map(str,re.split("[()+-/*]", user_input_num)))     # splits into list of numbers
+            user_input_num = list(filter(None, user_input_num))     # removes blanks
+            user_input_num = list(map(int, user_input_num))     # converts list elements to integers
             user_input_num.sort()
             krypto_start.sort()
             if krypto_start != user_input_num:
