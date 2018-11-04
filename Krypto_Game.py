@@ -5,11 +5,7 @@ import re
 
 def deck_construction():
     # BUILD & SHUFFLE THE DECK
-    triple_cards = [1,2,3,4,5,6]
-    quadruple_cards = [7,8,9,10]
-    double_cards = [11,12,13,14,15,16,17]
-    single_cards = [18,19,20,21,22,23,24,25]
-    krypto_deck = 3 * triple_cards + 4 * quadruple_cards + 2 * double_cards + single_cards
+    krypto_deck = (list(range(1,7))*3) + (list(range(7,11))*4) + (list(range(11,18))*2) + list(range(18,26))
     random.shuffle(krypto_deck)
     return krypto_deck
 
