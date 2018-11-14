@@ -2,6 +2,7 @@
 
 import random
 import re
+import sys
 from itertools import permutations
 
 def deck_construction():
@@ -37,7 +38,8 @@ def check_solution(user_response, krypto_start, krypto_end):
     try:
         eval(user_response)
     except Exception:
-        return "You have entered an invalid equation."
+        print("\nYou have entered an invalid equation.")
+        user_solution(krypto_start, krypto_end)
     else:
    
         # CHECK IF RESPONSE USES ONLY BINARY OPERATORS
@@ -45,7 +47,8 @@ def check_solution(user_response, krypto_start, krypto_end):
         user_input_sym = list(map(str,re.split("[1234567890]", user_input_sym)))     # splits into list of operators
         incorrect_sym = ['//', '**', '%', '++', '--', '(-', '*-', '+-', '/-','_',',']     # static list of incorrect operators
         if set(user_input_sym).isdisjoint(set(incorrect_sym)) == False or user_response[0] == '-':     # ensure there are no incorrect operators used
-            return "You can only use binary operations."
+            print("\nYou can only use binary operations.")
+            user_solution(krypto_start, krypto_end)
         else:
             
             # CHECK IF RESPONSE USES CORRECT NUMBERS               
@@ -56,20 +59,23 @@ def check_solution(user_response, krypto_start, krypto_end):
             user_input_num.sort()
             krypto_start.sort()
             if krypto_start != user_input_num:
-                return "You did not use the right input numbers."
+                print("\nYou did not use the right input numbers.")
+                user_solution(krypto_start, krypto_end)
             else:
                 
                 # CHECK IF RESPONSE EQUALS TARGET               
                 if eval(user_response) == krypto_end:
-                    return "You are correct!"
+                    print("\nYou are correct!")
                 else:
-                    return "You are incorrect."
+                    print("\nYou are incorrect.")
 
 def krypto_solver(solve_input, solve_output):
+    # BRUTE FORCE SOLVER
     kp = list(permutations(solve_input))
     op = list(set(list(permutations(['+','+','+','+','-','-','-','-','/','/','/','/','*','*','*','*'],4)))) 
     solved = False
     
+    # GENERATING ALL PERMUTATIONS OF INPUTS, BINARY OPERATORS, PARENTHESES
     for n in range(len(kp)):
         for p in range(len(op)):
             potential_solution = ''.join([str(kp[n][0]),op[p][0],str(kp[n][1]),op[p][1],str(kp[n][2]),op[p][2],str(kp[n][3]),op[p][3],str(kp[n][4])])
@@ -87,7 +93,8 @@ def krypto_solver(solve_input, solve_output):
             potential_solution12 = ''.join(['((',str(kp[n][0]),op[p][0],str(kp[n][1]),')',op[p][1],'(',str(kp[n][2]),op[p][2],str(kp[n][3]),'))',op[p][3],str(kp[n][4])])
             potential_solution13 = ''.join(['((',str(kp[n][0]),op[p][0],'(',str(kp[n][1]),op[p][1],str(kp[n][2]),'))',op[p][2],str(kp[n][3]),')',op[p][3],str(kp[n][4])])
             potential_solution14 = ''.join(['(((',str(kp[n][0]),op[p][0],str(kp[n][1]),')',op[p][1],str(kp[n][2]),')',op[p][2],str(kp[n][3]),')',op[p][3],str(kp[n][4])])
-                        
+            
+            # CHECKING IF ANY SOLUTIONS EQUAL THE TARGET. THE TRY SKIPS DIVIDE BY ZERO ERRORS            
             try:
                 if eval(potential_solution) == solve_output:
                     print(potential_solution, " = ", solve_output)
@@ -187,9 +194,12 @@ def krypto_game():
     krypto_target = deck_construction()[5]
     krypto_hand = print_format(krypto_input, krypto_target)
     print(krypto_hand)
+    print("Enter your solution below. You can also enter the following commands:\n'help' to view game instructions\n'reset' to reshuffle the Krypto hand\n'solve' to generate a solution\n'quit' to exit the game")
+    user_solution(krypto_input, krypto_target)
 
+def user_solution(ur_input,ur_target):
     # USER INPUT
-    user_input = input("Enter your solution below. You can also enter the following commands:\n'help' to view game instructions\n'reset' to reshuffle the Krypto hand\n'solve' to generate a solution\n\nEnter your response here: ")
+    user_input = input("Enter your response here: ")
     user_input = ''.join(user_input.split())
     user_input = user_input.lower()
     
@@ -199,8 +209,10 @@ def krypto_game():
     elif user_input == 'reset':
         krypto_game()
     elif user_input == 'solve':
-        krypto_solver(krypto_input, krypto_target)
+        krypto_solver(ur_input, ur_target)
+    elif user_input == 'quit':
+        sys.exit()
     else:     
-        print(check_solution(user_input, krypto_input, krypto_target))
+        check_solution(user_input, ur_input, ur_target)
 
 krypto_game()
