@@ -187,6 +187,8 @@ def krypto_solver(solve_input, solve_output):
             except: pass
         if solved == True:
             break
+    else:
+        print("No solution exists.")
 
 def krypto_game():
     # PRINT KRYPTO HAND
