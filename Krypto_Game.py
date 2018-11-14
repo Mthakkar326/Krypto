@@ -2,6 +2,7 @@
 
 import random
 import re
+from itertools import permutations
 
 def deck_construction():
     # BUILD & SHUFFLE THE DECK
@@ -64,6 +65,122 @@ def check_solution(user_response, krypto_start, krypto_end):
                 else:
                     return "You are incorrect."
 
+def krypto_solver(solve_input, solve_output):
+    kp = list(permutations(solve_input))
+    op = list(set(list(permutations(['+','+','+','+','-','-','-','-','/','/','/','/','*','*','*','*'],4)))) 
+    solved = False
+    
+    for n in range(len(kp)):
+        for p in range(len(op)):
+            potential_solution = ''.join([str(kp[n][0]),op[p][0],str(kp[n][1]),op[p][1],str(kp[n][2]),op[p][2],str(kp[n][3]),op[p][3],str(kp[n][4])])
+            potential_solution1 = ''.join([str(kp[n][0]),op[p][0],'(',str(kp[n][1]),op[p][1],'(',str(kp[n][2]),op[p][2],'(',str(kp[n][3]),op[p][3],str(kp[n][4]),')))'])
+            potential_solution2 = ''.join([str(kp[n][0]),op[p][0],'(',str(kp[n][1]),op[p][1],'((',str(kp[n][2]),op[p][2],str(kp[n][3]),')',op[p][3],str(kp[n][4]),'))'])
+            potential_solution3 = ''.join([str(kp[n][0]),op[p][0],'((',str(kp[n][1]),op[p][1],str(kp[n][2]),')',op[p][2],'(',str(kp[n][3]),op[p][3],str(kp[n][4]),'))'])
+            potential_solution4 = ''.join([str(kp[n][0]),op[p][0],'((',str(kp[n][1]),op[p][1],'(',str(kp[n][2]),op[p][2],str(kp[n][3]),'))',op[p][3],str(kp[n][4]),')'])
+            potential_solution5 = ''.join([str(kp[n][0]),op[p][0],'(((',str(kp[n][1]),op[p][1],str(kp[n][2]),')',op[p][2],str(kp[n][3]),')',op[p][3],str(kp[n][4]),')'])
+            potential_solution6 = ''.join(['(',str(kp[n][0]),op[p][0],str(kp[n][1]),')',op[p][1],'(',str(kp[n][2]),op[p][2],'(',str(kp[n][3]),op[p][3],str(kp[n][4]),'))'])
+            potential_solution7 = ''.join(['(',str(kp[n][0]),op[p][0],str(kp[n][1]),')',op[p][1],'((',str(kp[n][2]),op[p][2],str(kp[n][3]),')',op[p][3],str(kp[n][4]),')'])
+            potential_solution8 = ''.join(['(',str(kp[n][0]),op[p][0],'(',str(kp[n][1]),op[p][1],str(kp[n][2]),'))',op[p][2],'(',str(kp[n][3]),op[p][3],str(kp[n][4]),')'])
+            potential_solution9 = ''.join(['(',str(kp[n][0]),op[p][0],'(',str(kp[n][1]),op[p][1],'(',str(kp[n][2]),op[p][2],str(kp[n][3]),')))',op[p][3],str(kp[n][4])])
+            potential_solution10 = ''.join(['(',str(kp[n][0]),op[p][0],'((',str(kp[n][1]),op[p][1],str(kp[n][2]),')',op[p][2],str(kp[n][3]),'))',op[p][3],str(kp[n][4])])
+            potential_solution11 = ''.join(['((',str(kp[n][0]),op[p][0],str(kp[n][1]),')',op[p][1],str(kp[n][2]),')',op[p][2],'(',str(kp[n][3]),op[p][3],str(kp[n][4]),')'])
+            potential_solution12 = ''.join(['((',str(kp[n][0]),op[p][0],str(kp[n][1]),')',op[p][1],'(',str(kp[n][2]),op[p][2],str(kp[n][3]),'))',op[p][3],str(kp[n][4])])
+            potential_solution13 = ''.join(['((',str(kp[n][0]),op[p][0],'(',str(kp[n][1]),op[p][1],str(kp[n][2]),'))',op[p][2],str(kp[n][3]),')',op[p][3],str(kp[n][4])])
+            potential_solution14 = ''.join(['(((',str(kp[n][0]),op[p][0],str(kp[n][1]),')',op[p][1],str(kp[n][2]),')',op[p][2],str(kp[n][3]),')',op[p][3],str(kp[n][4])])
+                        
+            try:
+                if eval(potential_solution) == solve_output:
+                    print(potential_solution, " = ", solve_output)
+                    solved = True
+                    break
+            except: pass
+            try:
+                if eval(potential_solution1) == solve_output:
+                    print(potential_solution1, " = ", solve_output)
+                    solved = True
+                    break
+            except: pass
+            try:
+                if eval(potential_solution2) == solve_output:
+                    print(potential_solution2, " = ", solve_output)
+                    solved = True
+                    break
+            except: pass
+            try:
+                if eval(potential_solution3) == solve_output:
+                    print(potential_solution3, " = ", solve_output)
+                    solved = True
+                    break
+            except: pass
+            try:
+                if eval(potential_solution4) == solve_output:
+                    print(potential_solution4, " = ", solve_output)
+                    solved = True
+                    break
+            except: pass
+            try:
+                if eval(potential_solution5) == solve_output:
+                    print(potential_solution5, " = ", solve_output)
+                    solved = True
+                    break
+            except: pass
+            try:
+                if eval(potential_solution6) == solve_output:
+                    print(potential_solution6, " = ", solve_output)
+                    solved = True
+                    break
+            except: pass
+            try:
+                if eval(potential_solution7) == solve_output:
+                    print(potential_solution7, " = ", solve_output)
+                    solved = True
+                    break
+            except: pass
+            try:
+                if eval(potential_solution8) == solve_output:
+                    print(potential_solution8, " = ", solve_output)
+                    solved = True
+                    break
+            except: pass
+            try:
+                if eval(potential_solution9) == solve_output:
+                    print(potential_solution9, " = ", solve_output)
+                    solved = True
+                    break
+            except: pass
+            try:
+                if eval(potential_solution10) == solve_output:
+                    print(potential_solution10, " = ", solve_output)
+                    solved = True
+                    break
+            except: pass
+            try:
+                if eval(potential_solution11) == solve_output:
+                    print(potential_solution11, " = ", solve_output)
+                    solved = True
+                    break
+            except: pass
+            try:
+                if eval(potential_solution12) == solve_output:
+                    print(potential_solution12, " = ", solve_output)
+                    solved = True
+                    break
+            except: pass
+            try:
+                if eval(potential_solution13) == solve_output:
+                    print(potential_solution13, " = ", solve_output)
+                    solved = True
+                    break
+            except: pass
+            try:
+                if eval(potential_solution14) == solve_output:
+                    print(potential_solution14, " = ", solve_output)
+                    solved = True
+                    break
+            except: pass
+        if solved == True:
+            break
+
 def krypto_game():
     # PRINT KRYPTO HAND
     krypto_input = deck_construction()[0:5]
@@ -82,7 +199,7 @@ def krypto_game():
     elif user_input == 'reset':
         krypto_game()
     elif user_input == 'solve':
-        print("We are still working on developing a solver.")
+        krypto_solver(krypto_input, krypto_target)
     else:     
         print(check_solution(user_input, krypto_input, krypto_target))
 
