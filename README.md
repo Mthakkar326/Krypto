@@ -21,6 +21,6 @@ In multiplayer form, the first person to come up with the answer is the winner.
 
 For the purposes of this repository, we will be creating an individual game with user input functionality, accompanied by a solver that can identify the answer, if one exists. 
 
-There is opportunity to expand the scope of this repository to a multiplayer game where bymultiple users will receive the same set of input and target cards. Whichever user can submit the solution in the shortest amount of time will be declared the winner. 
+There is opportunity to expand the scope of this repository to a multiplayer game whereby multiple users will receive the same set of input and target cards. Whichever user can submit the solution in the shortest amount of time will be declared the winner. 
 
 Official Krypto competition rules may differ to those detailed above. 
