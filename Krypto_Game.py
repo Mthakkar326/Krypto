@@ -32,6 +32,8 @@ def game_instructions():
           "A sixth card is then randomly dealt, known as the target card:\n[6] [10] [7] [2] [11]\n[4]\n\n"\
           "The objective of the game is to use all 5 input cards exactly once to achieve the target card, using binary operations "\
           "(addition, subtraction, multiplication and division):\n(6 - 10 / 2) * (11 - 7) = 4")
+    print(krypto_hand)
+    user_solution(krypto_input, krypto_target)
        
 def check_solution(user_response, krypto_start, krypto_end):
     # CHECK IF RESPONSE CAN BE EVALUATED
@@ -66,8 +68,10 @@ def check_solution(user_response, krypto_start, krypto_end):
                 # CHECK IF RESPONSE EQUALS TARGET               
                 if eval(user_response) == krypto_end:
                     print("\nYou are correct!")
+                    play_again()
                 else:
                     print("\nYou are incorrect.")
+                    user_solution()
 
 def krypto_solver(solve_input, solve_output):
     # BRUTE FORCE SOLVER
@@ -186,20 +190,25 @@ def krypto_solver(solve_input, solve_output):
                     break
             except: pass
         if solved == True:
+            play_again()
             break
     else:
         print("No solution exists.")
+        play_again()
 
 def krypto_game():
     # PRINT KRYPTO HAND
+    global krypto_input
+    global krypto_target
+    global krypto_hand
     krypto_input = deck_construction()[0:5]
     krypto_target = deck_construction()[5]
     krypto_hand = print_format(krypto_input, krypto_target)
     print(krypto_hand)
     print("Enter your solution below. You can also enter the following commands:\n'help' to view game instructions\n'reset' to reshuffle the Krypto hand\n'solve' to generate a solution\n'quit' to exit the game")
-    user_solution(krypto_input, krypto_target)
+    user_solution()
 
-def user_solution(ur_input,ur_target):
+def user_solution():
     # USER INPUT
     user_input = input("Enter your response here: ")
     user_input = ''.join(user_input.split())
@@ -211,10 +220,22 @@ def user_solution(ur_input,ur_target):
     elif user_input == 'reset':
         krypto_game()
     elif user_input == 'solve':
-        krypto_solver(ur_input, ur_target)
+        krypto_solver(krypto_input, krypto_target)
     elif user_input == 'quit':
         sys.exit()
     else:     
-        check_solution(user_input, ur_input, ur_target)
+        check_solution(user_input, krypto_input, krypto_target)
+
+def play_again():
+    # PLAY AGAIN?
+    user_input = input("Play again? (y/n): ")
+    user_input = user_input.lower()
+    if user_input == 'y':
+        krypto_game()
+    elif user_input == 'n':
+        sys.exit(1)
+    else:
+        print("You did not select a valid response.")
+        play_again()
 
 krypto_game()
