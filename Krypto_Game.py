@@ -243,13 +243,13 @@ def main():
 
         if not show_rules:
             # Draw the target card.
-            target_label = font.render("Target Card", True, TEXT_COLOR)
+            target_label = font.render("Target", True, TEXT_COLOR)
             screen.blit(target_label, (75, 210))
             target_rect = pygame.Rect(75, 270, CARD_WIDTH, CARD_HEIGHT)
             draw_card(screen, target_rect, target_card, card_images)
 
             # Draw the number cards.
-            num_label = font.render("Number Cards", True, TEXT_COLOR)
+            num_label = font.render("Playing Cards", True, TEXT_COLOR)
             screen.blit(num_label, (300, 210))
             start_x = 300
             y = 270
