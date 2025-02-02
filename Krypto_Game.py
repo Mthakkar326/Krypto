@@ -1,242 +1,319 @@
-# KRYPTO GAME
-
+import pygame
 import random
-import re
 import sys
-from itertools import permutations
+import re
+import math
+from collections import Counter
 
-def deck_construction():
-    # BUILD & SHUFFLE THE DECK
-    krypto_deck = (list(range(1,7))*3) + (list(range(7,11))*4) + (list(range(11,18))*2) + list(range(18,26))
-    random.shuffle(krypto_deck)
-    return krypto_deck# KRYPTO GAME
+# -------------------------------
+# Game Constants and Configurations
+# -------------------------------
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 600
 
-def print_format(print_input, print_output):
-    # PRINT FORMAT AS CARDS
-    card_top = " ____ "
-    card_top2 = "|    |"
-    card_bottom = "|____|"
-    spacing = "\t    "
-    print_hand = (5 * card_top + "\n" + 5 * card_top2 +
-          f"\n|{print_input[0]:^4}||{print_input[1]:^4}||{print_input[2]:^4}||{print_input[3]:^4}||{print_input[4]:^4}|\n"
-          + 5 * card_bottom + "\n" + spacing + card_top + "\n" + spacing + card_top2 + "\n" + spacing +
-          f"|{print_output:^4}|" + "\n" + spacing + card_bottom + "\n")
-    return print_hand
+# New Colors:
+BG_COLOR = (0, 128, 0)  # A poker table green.
+CARD_COLOR = (255, 255, 0)  # Yellow cards.
+CARD_BORDER_COLOR = (0, 0, 0)  # Black border for cards.
+TEXT_COLOR = (255, 255, 255)  # White text.
+INPUT_BOX_COLOR = (255, 255, 255)  # White input box.
+BUTTON_COLOR = (188, 188, 188)  # Grey buttons.
+BUTTON_TEXT_COLOR = (0, 0, 0)  # Black text on buttons.
+MODAL_BG_COLOR = (50, 50, 50)  # Dark grey for modal background.
+MODAL_TEXT_COLOR = (255, 255, 255)  # White text for modal.
 
-def check_solution(user_response, krypto_start, krypto_end):
-    # CHECK IF RESPONSE CAN BE EVALUATED
+CARD_WIDTH = 80
+CARD_HEIGHT = 120
+CARD_MARGIN = 10
+
+# The full deck of 56 cards (see game rules)
+FULL_DECK = [
+    1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 7, 8, 9,
+    10, 7, 8, 9, 10, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 11, 12, 13, 14,
+    15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25
+]
+
+# -------------------------------
+# Helper Functions
+# -------------------------------
+
+
+def draw_card(surface, rect, number, font):
+    """Draws a card as a rectangle with its number centered."""
+    pygame.draw.rect(surface, CARD_COLOR, rect)
+    pygame.draw.rect(surface, CARD_BORDER_COLOR, rect, 2)
+    text = font.render(str(number), True, CARD_BORDER_COLOR)
+    text_rect = text.get_rect(center=rect.center)
+    surface.blit(text, text_rect)
+
+
+def check_expression(expr, number_cards, target):
+    """
+    Verifies that:
+      1. The expression contains only allowed characters.
+      2. Exactly five numbers are used.
+      3. The five numbers (as a multiset) exactly match the given number_cards.
+      4. The evaluated expression equals the target.
+    Returns a tuple (is_valid, message).
+    """
+    expr = expr.strip()
+    if not re.fullmatch(r'[0-9+\-*/()\s]+', expr):
+        return False, "Invalid characters in expression."
+    tokens = re.findall(r'\d+', expr)
+    if len(tokens) != 5:
+        return False, f"You must use exactly five numbers (found {len(tokens)} numbers)."
     try:
-        eval(user_response)
-    except Exception:
-        print("\nYou have entered an invalid equation.")
-        user_solution(krypto_start, krypto_end)
+        used_numbers = [int(token) for token in tokens]
+    except Exception as e:
+        return False, "Error parsing numbers."
+    if Counter(used_numbers) != Counter(number_cards):
+        return False, "The numbers used do not match the given number cards."
+    try:
+        result = eval(expr, {"__builtins__": None}, {})
+    except Exception as e:
+        return False, "Error evaluating expression: " + str(e)
+    if math.isclose(result, target, rel_tol=1e-9):
+        return True, "Correct! You win!"
     else:
+        return False, f"Expression does not equal target. (Result: {result}, Target: {target})"
 
-        # CHECK IF RESPONSE USES ONLY BINARY OPERATORS
-        user_input_sym = user_response
-        user_input_sym = list(map(str,re.split("[1234567890]", user_input_sym)))     # splits into list of operators
-        incorrect_sym = ['//', '**', '%', '++', '--', '(-', '*-', '+-', '/-','_',',']     # static list of incorrect operators
-        if set(user_input_sym).isdisjoint(set(incorrect_sym)) == False or user_response[0] == '-':     # ensure there are no incorrect operators used
-            print("\nYou can only use binary operations.")
-            user_solution(krypto_start, krypto_end)
-        else:
 
-            # CHECK IF RESPONSE USES CORRECT NUMBERS
-            user_input_num = user_response
-            user_input_num = list(map(str,re.split("[()+-/*]", user_input_num)))     # splits into list of numbers
-            user_input_num = list(filter(None, user_input_num))     # removes blanks
-            user_input_num = list(map(int, user_input_num))     # converts list elements to integers
-            user_input_num.sort()
-            krypto_start.sort()
-            if krypto_start != user_input_num:
-                print("\nYou did not use the right input numbers.")
-                user_solution(krypto_start, krypto_end)
+def solve_game(number_cards, target):
+    """
+    Attempts to find an expression that uses all number_cards exactly once
+    and equals the target.
+    Returns a solution string if found, otherwise returns a message.
+    """
+    numbers = [(num, str(num)) for num in number_cards]
+
+    def search(nums):
+        if len(nums) == 1:
+            if math.isclose(nums[0][0], target, rel_tol=1e-9):
+                return nums[0][1]
             else:
+                return None
+        for i in range(len(nums)):
+            for j in range(len(nums)):
+                if i != j:
+                    a, expr_a = nums[i]
+                    b, expr_b = nums[j]
+                    new_nums = [
+                        nums[k] for k in range(len(nums)) if k != i and k != j
+                    ]
+                    candidates = []
+                    candidates.append((a + b, f"({expr_a}+{expr_b})"))
+                    candidates.append((a * b, f"({expr_a}*{expr_b})"))
+                    candidates.append((a - b, f"({expr_a}-{expr_b})"))
+                    candidates.append((b - a, f"({expr_b}-{expr_a})"))
+                    if not math.isclose(b, 0, rel_tol=1e-9):
+                        candidates.append((a / b, f"({expr_a}/{expr_b})"))
+                    if not math.isclose(a, 0, rel_tol=1e-9):
+                        candidates.append((b / a, f"({expr_b}/{expr_a})"))
+                    for value, new_expr in candidates:
+                        next_nums = new_nums + [(value, new_expr)]
+                        res = search(next_nums)
+                        if res is not None:
+                            return res
+        return None
 
-                # CHECK IF RESPONSE EQUALS TARGET
-                if eval(user_response) == krypto_end:
-                    print("\nYou are correct!")
-                    play_again()
-                else:
-                    print("\nYou are incorrect.")
-                    user_solution()
+    solution = search(numbers)
+    if solution is None:
+        return "No solution found."
+    return solution
 
-def krypto_solver(solve_input, solve_output):
-    # BRUTE FORCE SOLVER
-    kp = list(permutations(solve_input))
-    op = list(set(list(permutations(['+','+','+','+','-','-','-','-','/','/','/','/','*','*','*','*'],4))))
-    solved = False
 
-    # GENERATING ALL PERMUTATIONS OF INPUTS, BINARY OPERATORS, PARENTHESES
-    for n in range(len(kp)):
-        for p in range(len(op)):
-            potential_solution = ''.join([str(kp[n][0]),op[p][0],str(kp[n][1]),op[p][1],str(kp[n][2]),op[p][2],str(kp[n][3]),op[p][3],str(kp[n][4])])
-            potential_solution1 = ''.join([str(kp[n][0]),op[p][0],'(',str(kp[n][1]),op[p][1],'(',str(kp[n][2]),op[p][2],'(',str(kp[n][3]),op[p][3],str(kp[n][4]),')))'])
-            potential_solution2 = ''.join([str(kp[n][0]),op[p][0],'(',str(kp[n][1]),op[p][1],'((',str(kp[n][2]),op[p][2],str(kp[n][3]),')',op[p][3],str(kp[n][4]),'))'])
-            potential_solution3 = ''.join([str(kp[n][0]),op[p][0],'((',str(kp[n][1]),op[p][1],str(kp[n][2]),')',op[p][2],'(',str(kp[n][3]),op[p][3],str(kp[n][4]),'))'])
-            potential_solution4 = ''.join([str(kp[n][0]),op[p][0],'((',str(kp[n][1]),op[p][1],'(',str(kp[n][2]),op[p][2],str(kp[n][3]),'))',op[p][3],str(kp[n][4]),')'])
-            potential_solution5 = ''.join([str(kp[n][0]),op[p][0],'(((',str(kp[n][1]),op[p][1],str(kp[n][2]),')',op[p][2],str(kp[n][3]),')',op[p][3],str(kp[n][4]),')'])
-            potential_solution6 = ''.join(['(',str(kp[n][0]),op[p][0],str(kp[n][1]),')',op[p][1],'(',str(kp[n][2]),op[p][2],'(',str(kp[n][3]),op[p][3],str(kp[n][4]),'))'])
-            potential_solution7 = ''.join(['(',str(kp[n][0]),op[p][0],str(kp[n][1]),')',op[p][1],'((',str(kp[n][2]),op[p][2],str(kp[n][3]),')',op[p][3],str(kp[n][4]),')'])
-            potential_solution8 = ''.join(['(',str(kp[n][0]),op[p][0],'(',str(kp[n][1]),op[p][1],str(kp[n][2]),'))',op[p][2],'(',str(kp[n][3]),op[p][3],str(kp[n][4]),')'])
-            potential_solution9 = ''.join(['(',str(kp[n][0]),op[p][0],'(',str(kp[n][1]),op[p][1],'(',str(kp[n][2]),op[p][2],str(kp[n][3]),')))',op[p][3],str(kp[n][4])])
-            potential_solution10 = ''.join(['(',str(kp[n][0]),op[p][0],'((',str(kp[n][1]),op[p][1],str(kp[n][2]),')',op[p][2],str(kp[n][3]),'))',op[p][3],str(kp[n][4])])
-            potential_solution11 = ''.join(['((',str(kp[n][0]),op[p][0],str(kp[n][1]),')',op[p][1],str(kp[n][2]),')',op[p][2],'(',str(kp[n][3]),op[p][3],str(kp[n][4]),')'])
-            potential_solution12 = ''.join(['((',str(kp[n][0]),op[p][0],str(kp[n][1]),')',op[p][1],'(',str(kp[n][2]),op[p][2],str(kp[n][3]),'))',op[p][3],str(kp[n][4])])
-            potential_solution13 = ''.join(['((',str(kp[n][0]),op[p][0],'(',str(kp[n][1]),op[p][1],str(kp[n][2]),'))',op[p][2],str(kp[n][3]),')',op[p][3],str(kp[n][4])])
-            potential_solution14 = ''.join(['(((',str(kp[n][0]),op[p][0],str(kp[n][1]),')',op[p][1],str(kp[n][2]),')',op[p][2],str(kp[n][3]),')',op[p][3],str(kp[n][4])])
+# -------------------------------
+# Main Game Function
+# -------------------------------
 
-            # CHECKING IF ANY SOLUTIONS EQUAL THE TARGET. THE TRY SKIPS DIVIDE BY ZERO ERRORS
-            try:
-                if eval(potential_solution) == solve_output:
-                    print(potential_solution, " = ", solve_output)
-                    solved = True
-                    break
-            except: pass
-            try:
-                if eval(potential_solution1) == solve_output:
-                    print(potential_solution1, " = ", solve_output)
-                    solved = True
-                    break
-            except: pass
-            try:
-                if eval(potential_solution2) == solve_output:
-                    print(potential_solution2, " = ", solve_output)
-                    solved = True
-                    break
-            except: pass
-            try:
-                if eval(potential_solution3) == solve_output:
-                    print(potential_solution3, " = ", solve_output)
-                    solved = True
-                    break
-            except: pass
-            try:
-                if eval(potential_solution4) == solve_output:
-                    print(potential_solution4, " = ", solve_output)
-                    solved = True
-                    break
-            except: pass
-            try:
-                if eval(potential_solution5) == solve_output:
-                    print(potential_solution5, " = ", solve_output)
-                    solved = True
-                    break
-            except: pass
-            try:
-                if eval(potential_solution6) == solve_output:
-                    print(potential_solution6, " = ", solve_output)
-                    solved = True
-                    break
-            except: pass
-            try:
-                if eval(potential_solution7) == solve_output:
-                    print(potential_solution7, " = ", solve_output)
-                    solved = True
-                    break
-            except: pass
-            try:
-                if eval(potential_solution8) == solve_output:
-                    print(potential_solution8, " = ", solve_output)
-                    solved = True
-                    break
-            except: pass
-            try:
-                if eval(potential_solution9) == solve_output:
-                    print(potential_solution9, " = ", solve_output)
-                    solved = True
-                    break
-            except: pass
-            try:
-                if eval(potential_solution10) == solve_output:
-                    print(potential_solution10, " = ", solve_output)
-                    solved = True
-                    break
-            except: pass
-            try:
-                if eval(potential_solution11) == solve_output:
-                    print(potential_solution11, " = ", solve_output)
-                    solved = True
-                    break
-            except: pass
-            try:
-                if eval(potential_solution12) == solve_output:
-                    print(potential_solution12, " = ", solve_output)
-                    solved = True
-                    break
-            except: pass
-            try:
-                if eval(potential_solution13) == solve_output:
-                    print(potential_solution13, " = ", solve_output)
-                    solved = True
-                    break
-            except: pass
-            try:
-                if eval(potential_solution14) == solve_output:
-                    print(potential_solution14, " = ", solve_output)
-                    solved = True
-                    break
-            except: pass
-        if solved == True:
-            play_again()
-            break
-    else:
-        print("No solution exists.")
-        play_again()
 
-def game_instructions():
-    # PRINT GAME INSTRUCTIONS
-    print("\nGAME INSTRUCTIONS\n\n"\
-          "Krypto is a mathematical card game with very simple rules. "\
-          "The Krypto deck contains 56 cards labelled 1 through 25. "\
-          "Five cards are randomly dealt in a straight line, known as the input cards. "\
-          "An example is included below:\n[6] [10] [7] [2] [11]\n\n"\
-          "A sixth card is then randomly dealt, known as the target card:\n[6] [10] [7] [2] [11]\n[4]\n\n"\
-          "The objective of the game is to use all 5 input cards exactly once to achieve the target card, using binary operations "\
-          "(addition, subtraction, multiplication and division):\n(6 - 10 / 2) * (11 - 7) = 4\n\n---\n")
+def main():
+    pygame.init()
+    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
+    pygame.display.set_caption("Krypto Game")
+    clock = pygame.time.Clock()
 
-def krypto_game():
-    # PRINT KRYPTO HAND
-    global krypto_input
-    global krypto_target
-    global krypto_hand
-    krypto_input = deck_construction()[0:5]
-    krypto_target = deck_construction()[5]
-    krypto_hand = print_format(krypto_input, krypto_target)
-    print(krypto_hand)
-    print("Enter your solution below. You can also enter the following commands:\n'help' to view game instructions\n'reset' to reshuffle the Krypto hand\n'solve' to generate a solution\n'quit' to exit the game")
-    user_solution()
+    # Fonts for various texts
+    font = pygame.font.SysFont(None, 36)
+    small_font = pygame.font.SysFont(None, 28)
+    big_title_font = pygame.font.SysFont(None, 64)
+    rules_title_font = pygame.font.SysFont(None, 48)
 
-def user_solution():
-    # USER INPUT
-    user_input = input("Enter your response here: ")
-    user_input = ''.join(user_input.split())
-    user_input = user_input.lower()
+    # Button definitions for game controls
+    submit_button_rect = pygame.Rect(50, SCREEN_HEIGHT - 80, 140, 40)
+    solve_button_rect = pygame.Rect(270, SCREEN_HEIGHT - 80, 140, 40)
+    new_round_button_rect = pygame.Rect(SCREEN_WIDTH - 310, SCREEN_HEIGHT - 80,
+                                        140, 40)
+    game_rules_button_rect = pygame.Rect(SCREEN_WIDTH - 150, 20, 130, 40)
 
-    # EVALUATE USER INPUT
-    if user_input == 'help':
-        game_instructions()
-        print(krypto_hand)
-        user_solution()
-    elif user_input == 'reset':
-        krypto_game()
-    elif user_input == 'solve':
-        krypto_solver(krypto_input, krypto_target)
-    elif user_input == 'quit':
-        sys.exit()
-    else:
-        check_solution(user_input, krypto_input, krypto_target)
+    # Modal (Game Rules) window dimensions and its Close button.
+    modal_width = 600
+    modal_height = 400
+    modal_rect = pygame.Rect((SCREEN_WIDTH - modal_width) // 2,
+                             (SCREEN_HEIGHT - modal_height) // 2, modal_width,
+                             modal_height)
+    close_button_rect = pygame.Rect(modal_rect.centerx - 50,
+                                    modal_rect.bottom - 60, 100, 40)
 
-def play_again():
-    # PLAY AGAIN?
-    user_input = input("Play again? (y/n): ")
-    user_input = user_input.lower()
-    if user_input == 'y':
-        krypto_game()
-    elif user_input == 'n':
-        sys.exit(1)
-    else:
-        print("You did not select a valid response.")
-        play_again()
+    # A short description for the game rules modal.
+    rules_text = [
+        "Combine all five playing cards with arithmetic operations",
+        "(+, -, *, /) to form an expression that equals the target card.", "",
+        "- The deck has 56 cards numbered 1 to 25.",
+        "- Six cards are drawn; the 6th card is the target,",
+        "  and the other five are playing cards.",
+        "- Use each playing card exactly once.", "- Parentheses are allowed."
+    ]
 
-krypto_game()
+    show_rules = False
+
+    state = "enter_expression"
+    available_cards = []
+    target_card = None
+    number_cards = []
+    user_input = ""
+    result_message = ""
+
+    def new_round():
+        nonlocal state, available_cards, target_card, number_cards, user_input, result_message
+        deck = FULL_DECK.copy()
+        random.shuffle(deck)
+        available_cards = deck[:6]
+        target_card = available_cards[5]
+        number_cards = available_cards[:5]
+        user_input = ""
+        result_message = ""
+        state = "enter_expression"
+
+    new_round()
+
+    running = True
+    while running:
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                running = False
+
+            if show_rules:
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    pos = event.pos
+                    if close_button_rect.collidepoint(pos):
+                        show_rules = False
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_ESCAPE:
+                        show_rules = False
+            else:
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_RETURN:
+                        valid, message = check_expression(
+                            user_input, number_cards, target_card)
+                        result_message = message
+                    elif event.key == pygame.K_BACKSPACE:
+                        user_input = user_input[:-1]
+                    else:
+                        user_input += event.unicode
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    pos = pygame.mouse.get_pos()
+                    if game_rules_button_rect.collidepoint(pos):
+                        show_rules = True
+                    if submit_button_rect.collidepoint(pos):
+                        valid, message = check_expression(
+                            user_input, number_cards, target_card)
+                        result_message = message
+                    if solve_button_rect.collidepoint(pos):
+                        solution = solve_game(number_cards, target_card)
+                        result_message = solution
+                    if new_round_button_rect.collidepoint(pos):
+                        new_round()
+
+        screen.fill(BG_COLOR)
+
+        # Updated title and subtitle placement.
+        title_text = big_title_font.render("Krypto", True, TEXT_COLOR)
+        title_rect = title_text.get_rect(center=(SCREEN_WIDTH // 2, 50))
+        screen.blit(title_text, title_rect)
+        subtitle_text = small_font.render("General Milz Media", True,
+                                          TEXT_COLOR)
+        subtitle_rect = subtitle_text.get_rect(center=(SCREEN_WIDTH // 2, 90))
+        screen.blit(subtitle_text, subtitle_rect)
+
+        pygame.draw.rect(screen, BUTTON_COLOR, game_rules_button_rect)
+        gr_text = small_font.render("Game Rules", True, BUTTON_TEXT_COLOR)
+        gr_text_rect = gr_text.get_rect(center=game_rules_button_rect.center)
+        screen.blit(gr_text, gr_text_rect)
+
+        if not show_rules:
+            target_label = font.render("Target", True, TEXT_COLOR)
+            screen.blit(target_label, (50, 140))
+            target_rect = pygame.Rect(50, 180, CARD_WIDTH, CARD_HEIGHT)
+            draw_card(screen, target_rect, target_card, font)
+
+            num_label = font.render("Playing Cards", True, TEXT_COLOR)
+            screen.blit(num_label, (200, 140))
+            start_x = 200
+            y = 180
+            for i, card in enumerate(number_cards):
+                rect = pygame.Rect(start_x + i * (CARD_WIDTH + CARD_MARGIN), y,
+                                   CARD_WIDTH, CARD_HEIGHT)
+                draw_card(screen, rect, card, font)
+
+            input_box = pygame.Rect(50, SCREEN_HEIGHT - 150,
+                                    SCREEN_WIDTH - 220, 50)
+            pygame.draw.rect(screen, INPUT_BOX_COLOR, input_box)
+            pygame.draw.rect(screen, (0, 0, 0), input_box, 2)
+            input_text = font.render(user_input, True, (0, 0, 0))
+            screen.blit(input_text, (input_box.x + 5, input_box.y + 10))
+
+            result_render = font.render(result_message, True, TEXT_COLOR)
+            screen.blit(result_render, (50, SCREEN_HEIGHT - 220))
+
+            pygame.draw.rect(screen, BUTTON_COLOR, submit_button_rect)
+            submit_text = small_font.render("Submit", True, BUTTON_TEXT_COLOR)
+            submit_text_rect = submit_text.get_rect(
+                center=submit_button_rect.center)
+            screen.blit(submit_text, submit_text_rect)
+
+            pygame.draw.rect(screen, BUTTON_COLOR, solve_button_rect)
+            solve_text = small_font.render("Solve", True, BUTTON_TEXT_COLOR)
+            solve_text_rect = solve_text.get_rect(
+                center=solve_button_rect.center)
+            screen.blit(solve_text, solve_text_rect)
+
+            pygame.draw.rect(screen, BUTTON_COLOR, new_round_button_rect)
+            new_round_text = small_font.render("New Round", True,
+                                               BUTTON_TEXT_COLOR)
+            new_round_text_rect = new_round_text.get_rect(
+                center=new_round_button_rect.center)
+            screen.blit(new_round_text, new_round_text_rect)
+        else:
+            pygame.draw.rect(screen, MODAL_BG_COLOR, modal_rect)
+            pygame.draw.rect(screen, (0, 0, 0), modal_rect, 2)
+
+            modal_title = rules_title_font.render("Game Rules", True,
+                                                  MODAL_TEXT_COLOR)
+            modal_title_rect = modal_title.get_rect(center=(modal_rect.centerx,
+                                                            modal_rect.y + 40))
+            screen.blit(modal_title, modal_title_rect)
+
+            # Display all the rule lines (less than 10 lines)
+            start_y = modal_rect.y + 80
+            line_height = 24
+            for i, line in enumerate(rules_text):
+                line_surf = small_font.render(line, True, MODAL_TEXT_COLOR)
+                screen.blit(line_surf,
+                            (modal_rect.x + 20, start_y + i * line_height))
+
+            pygame.draw.rect(screen, BUTTON_COLOR, close_button_rect)
+            close_text = small_font.render("Close", True, BUTTON_TEXT_COLOR)
+            close_text_rect = close_text.get_rect(
+                center=close_button_rect.center)
+            screen.blit(close_text, close_text_rect)
+
+        pygame.display.flip()
+        clock.tick(30)
+
+    pygame.quit()
+    sys.exit()
+
+
+if __name__ == "__main__":
+    main()
